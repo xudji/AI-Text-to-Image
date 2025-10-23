@@ -31,10 +31,10 @@ export interface Image {
 
 export interface GenerateImageParams {
   prompt: string
-  width?: number
-  height?: number
-  numImages?: number
-  quality?: 'standard' | 'hd'
+  size?: string
+  model?: string
+  negativePrompt?: string
+  useFullAPI?: boolean
 }
 
 // 生成状态类型

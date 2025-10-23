@@ -1,6 +1,10 @@
 import { ReactNode } from 'react'
+import { Layout as AntLayout, Typography } from 'antd'
 import Header from './Header'
 import Footer from './Footer'
+
+const { Content } = AntLayout
+const { Text } = Typography
 
 interface LayoutProps {
   children: ReactNode
@@ -8,13 +12,13 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <AntLayout style={{ minHeight: '100vh', background: 'transparent' }}>
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <Content style={{ background: 'transparent' }}>
         {children}
-      </main>
+      </Content>
       <Footer />
-    </div>
+    </AntLayout>
   )
 }
 

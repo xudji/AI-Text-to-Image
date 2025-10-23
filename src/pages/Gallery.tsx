@@ -1,33 +1,227 @@
+import { useState, useEffect } from 'react'
+import { Layout, Typography, Card, Row, Col, Empty, Button, Space, Tag, Image, Spin, Statistic, message } from 'antd'
+import { Link } from 'react-router-dom'
+import { 
+  PictureOutlined, 
+  RocketOutlined, 
+  CalendarOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+  ClearOutlined
+} from '@ant-design/icons'
+import { storageService, StoredImage } from '../services/storageService'
+import { downloadService } from '../services/downloadService'
+
+const { Content } = Layout
+const { Title, Text } = Typography
+
 const Gallery = () => {
-  // TODO: 从API获取图片数据
-  const images = []
+  const [images, setImages] = useState<StoredImage[]>([])
+  const [, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    total: 0,
+    today: 0,
+    thisWeek: 0
+  })
+
+  // 加载图片数据
+  useEffect(() => {
+    const loadImages = () => {
+      try {
+        const storedImages = storageService.getAllImages()
+        setImages(storedImages)
+        setStats(storageService.getStats())
+        setLoading(false)
+      } catch (error) {
+        console.error('加载图片失败:', error)
+        setLoading(false)
+      }
+    }
+
+    loadImages()
+  }, [])
+
+  // 下载图片
+  const handleDownload = async (image: StoredImage) => {
+    try {
+      const filename = downloadService.generateFilename(image.prompt, 0, image.model)
+      await downloadService.downloadImage(image.url, filename)
+      message.success('下载成功！')
+    } catch (error) {
+      message.error('下载失败，请重试')
+    }
+  }
+
+  // 删除图片
+  const handleDelete = (imageId: string) => {
+    storageService.deleteImage(imageId)
+    setImages(storageService.getAllImages())
+    setStats(storageService.getStats())
+    message.success('删除成功！')
+  }
+
+  // 清空所有图片
+  const handleClearAll = () => {
+    storageService.clearAllImages()
+    setImages([])
+    setStats(storageService.getStats())
+    message.success('已清空所有图片！')
+  }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">图片画廊</h1>
-      
-      {images.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">暂无图片</p>
-          <p className="text-gray-400">开始生成您的第一张图片吧！</p>
+    <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <Title level={1} style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '16px'
+          }}>
+            <PictureOutlined /> 图片画廊
+          </Title>
+          <Text type="secondary" style={{ fontSize: '16px' }}>
+            展示您生成的所有精美图片
+          </Text>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((image, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <img
-                src={image.url}
-                alt={image.prompt}
-                className="w-full h-48 object-cover"
+
+        {/* 统计信息 */}
+        <Card style={{ marginBottom: '24px' }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="总图片数"
+                value={stats.total}
+                prefix={<PictureOutlined />}
               />
-              <div className="p-4">
-                <p className="text-gray-600 text-sm">{image.prompt}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="今日生成"
+                value={stats.today}
+                prefix={<CalendarOutlined />}
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="本周生成"
+                value={stats.thisWeek}
+                prefix={<RocketOutlined />}
+              />
+            </Col>
+          </Row>
+        </Card>
+        
+        {images.length === 0 ? (
+          <Card style={{ textAlign: 'center', padding: '48px' }}>
+            <Empty
+              image={<PictureOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
+              description={
+                <Space direction="vertical" size="middle">
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '18px' }}>暂无图片</Text>
+                  </div>
+                  <div>
+                    <Text type="secondary">开始生成您的第一张图片吧！</Text>
+                  </div>
+                  <Button 
+                    type="primary" 
+                    size="large" 
+                    icon={<RocketOutlined />}
+                    style={{ marginTop: '16px' }}
+                  >
+                    <Link to="/generate" style={{ color: 'inherit' }}>开始生成</Link>
+                  </Button>
+                </Space>
+              }
+            />
+          </Card>
+        ) : (
+          <Card 
+            title={
+              <Space>
+                <PictureOutlined />
+                <span>我的作品</span>
+                <Tag color="blue">{images.length} 张图片</Tag>
+                <Button 
+                  type="text" 
+                  danger
+                  icon={<ClearOutlined />} 
+                  onClick={handleClearAll}
+                  style={{ marginLeft: 'auto' }}
+                >
+                  清空所有
+                </Button>
+              </Space>
+            }
+          >
+            <Row gutter={[16, 16]}>
+              {images.map((image: any, index: number) => (
+                <Col xs={24} sm={12} md={8} lg={6} key={index}>
+                  <Card
+                    hoverable
+                    cover={
+                      <Image
+                        src={image.url}
+                        alt={image.prompt}
+                        style={{ height: '200px', objectFit: 'cover' }}
+                        placeholder={
+                          <div style={{ 
+                            height: '200px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            backgroundColor: '#f5f5f5'
+                          }}>
+                            <Spin />
+                          </div>
+                        }
+                      />
+                    }
+                    actions={[
+                      <Button 
+                        key="download" 
+                        type="text" 
+                        icon={<DownloadOutlined />} 
+                        title="下载图片"
+                        onClick={() => handleDownload(image)}
+                      />,
+                      <Button 
+                        key="delete" 
+                        type="text" 
+                        danger
+                        icon={<DeleteOutlined />} 
+                        title="删除图片"
+                        onClick={() => handleDelete(image.id)}
+                      />,
+                    ]}
+                    style={{ height: '100%' }}
+                  >
+                    <Card.Meta
+                      title={
+                        <Text ellipsis={{ tooltip: image.prompt }}>
+                          {image.prompt}
+                        </Text>
+                      }
+                      description={
+                        <Space direction="vertical" size="small">
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {image.width} × {image.height}
+                          </Text>
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            <CalendarOutlined /> {new Date(image.createdAt).toLocaleString()}
+                          </Text>
+                        </Space>
+                      }
+                    />
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+        )}
+      </div>
+    </Content>
   )
 }
 
