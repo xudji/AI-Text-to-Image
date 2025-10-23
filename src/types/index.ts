@@ -23,16 +23,29 @@ export interface Image {
   id: string
   url: string
   prompt: string
-  style?: string
-  size: string
+  width: number
+  height: number
+  quality?: 'standard' | 'hd'
   createdAt: string
-  updatedAt: string
 }
 
 export interface GenerateImageParams {
   prompt: string
-  style?: 'realistic' | 'artistic' | 'cartoon' | 'anime'
-  size?: '256x256' | '512x512' | '1024x1024'
+  width?: number
+  height?: number
+  numImages?: number
+  quality?: 'standard' | 'hd'
+}
+
+// 生成状态类型
+export type GenerationStatus = 'idle' | 'generating' | 'success' | 'error'
+
+// 生成结果类型
+export interface GenerationResult {
+  status: GenerationStatus
+  images: Image[]
+  error?: string
+  progress?: number
 }
 
 // 用户相关类型
@@ -49,4 +62,19 @@ export interface ApiError {
   message: string
   code: string
   details?: Record<string, any>
+}
+
+// 健康检查类型
+export interface HealthStatus {
+  status: 'UP' | 'DOWN'
+  timestamp: string
+  uptime: number
+}
+
+// 应用信息类型
+export interface AppInfo {
+  name: string
+  version: string
+  description: string
+  buildTime: string
 }

@@ -1,50 +1,65 @@
 import client from './client'
 
+// 图像生成请求参数
 export interface GenerateImageRequest {
   prompt: string
-  style?: string
-  size?: '256x256' | '512x512' | '1024x1024'
+  width?: number
+  height?: number
+  numImages?: number
+  quality?: 'standard' | 'hd'
 }
 
+// 图像生成响应
 export interface GenerateImageResponse {
-  id: string
-  url: string
-  prompt: string
-  createdAt: string
+  success: boolean
+  data: {
+    id: string
+    url: string
+    prompt: string
+    width: number
+    height: number
+    createdAt: string
+  }[]
+  message?: string
 }
 
-export interface ImageGalleryItem {
-  id: string
-  url: string
-  prompt: string
-  createdAt: string
+// 健康检查响应
+export interface HealthCheckResponse {
+  status: string
+  timestamp: string
+  uptime: number
+}
+
+// 应用信息响应
+export interface AppInfoResponse {
+  name: string
+  version: string
+  description: string
+  buildTime: string
 }
 
 export const imageService = {
   // 生成图片
   generateImage: async (data: GenerateImageRequest): Promise<GenerateImageResponse> => {
-    const response = await client.post('/images/generate', data)
+    const response = await client.post('/api/v1/images/generate', data)
     return response.data
   },
 
-  // 获取图片列表
-  getImages: async (page = 1, limit = 20): Promise<ImageGalleryItem[]> => {
-    const response = await client.get('/images', {
-      params: { page, limit }
-    })
+  // 健康检查
+  healthCheck: async (): Promise<HealthCheckResponse> => {
+    const response = await client.get('/api/v1/images/health')
     return response.data
   },
 
-  // 删除图片
-  deleteImage: async (id: string): Promise<void> => {
-    await client.delete(`/images/${id}`)
+  // 获取应用信息
+  getAppInfo: async (): Promise<AppInfoResponse> => {
+    const response = await client.get('/actuator/info')
+    return response.data
   },
 
-  // 下载图片
-  downloadImage: async (id: string): Promise<Blob> => {
-    const response = await client.get(`/images/${id}/download`, {
-      responseType: 'blob'
-    })
+  // 获取应用健康状态
+  getAppHealth: async (): Promise<{ status: string }> => {
+    const response = await client.get('/actuator/health')
     return response.data
   }
 }
