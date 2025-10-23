@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Layout, 
   Card, 
@@ -11,6 +11,7 @@ import {
   Space, 
   Alert,
   Divider,
+  Table,
   Tag
 } from 'antd'
 import { 
@@ -34,6 +35,89 @@ const APITest = () => {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [testHistory, setTestHistory] = useState<any[]>([])
+
+  // 表格列定义
+  const columns = [
+    {
+      title: '状态',
+      dataIndex: 'success',
+      key: 'success',
+      width: 80,
+      render: (success: boolean) => (
+        <Tag color={success ? 'success' : 'error'}>
+          {success ? '成功' : '失败'}
+        </Tag>
+      )
+    },
+    {
+      title: '响应数据',
+      dataIndex: 'responseData',
+      key: 'responseData',
+      width: 120,
+      ellipsis: true,
+      render: (data: any) => (
+        <span title={JSON.stringify(data, null, 2)}>
+          {data ? '查看详情' : '-'}
+        </span>
+      )
+    },
+    {
+      title: '时间',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 150,
+      render: (timestamp: string) => new Date(timestamp).toLocaleString()
+    },
+    {
+      title: '提示词',
+      dataIndex: 'prompt',
+      key: 'prompt',
+      width: 200,
+      ellipsis: true,
+      render: (text: string) => <span title={text}>{text}</span>
+    },
+    {
+      title: '图片数量',
+      dataIndex: 'imageCount',
+      key: 'imageCount',
+      width: 90,
+      render: (count: number) => <span>{count} 张</span>
+    },
+    {
+      title: '模式',
+      dataIndex: 'type',
+      key: 'type',
+      width: 90,
+      render: (type: string) => <Tag color={type === '简化模式' ? 'blue' : 'green'}>{type}</Tag>
+    },
+    {
+      title: '模型',
+      dataIndex: 'model',
+      key: 'model',
+      width: 120,
+      render: (model: string) => <Tag>{model}</Tag>
+    }
+  ]
+
+  // 加载测试历史记录
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('apiTestHistory')
+    if (savedHistory) {
+      try {
+        setTestHistory(JSON.parse(savedHistory))
+      } catch (error) {
+        console.error('加载测试历史失败:', error)
+      }
+    }
+  }, [])
+
+  // 保存测试历史记录
+  const saveTestHistory = (testResult: any) => {
+    const newHistory = [testResult, ...testHistory]
+    setTestHistory(newHistory)
+    localStorage.setItem('apiTestHistory', JSON.stringify(newHistory))
+  }
 
   const handleTestSimpleAPI = async () => {
     setLoading(true)
@@ -47,6 +131,23 @@ const APITest = () => {
         model
       })
       setResult(response)
+      
+      // 保存测试结果到历史记录
+      const testResult = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        type: '简化模式',
+        prompt,
+        size,
+        model,
+        success: response.success,
+        message: response.message,
+        imageCount: response.imageUrls?.length || 0,
+        requestId: response.requestId,
+        generatedAt: response.generatedAt,
+        responseData: response
+      }
+      saveTestHistory(testResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : '测试失败')
     } finally {
@@ -83,6 +184,23 @@ const APITest = () => {
         }
       })
       setResult(response)
+      
+      // 保存测试结果到历史记录
+      const testResult = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        type: '完整模式',
+        prompt,
+        size,
+        model,
+        success: response.success,
+        message: response.message,
+        imageCount: response.imageUrls?.length || 0,
+        requestId: response.requestId,
+        generatedAt: response.generatedAt,
+        responseData: response
+      }
+      saveTestHistory(testResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : '测试失败')
     } finally {
@@ -94,11 +212,11 @@ const APITest = () => {
     <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)', background: '#fafafa' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <Title level={1} style={{ 
+          <Title level={3} style={{ 
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            marginBottom: '16px'
+            marginBottom: '4px'
           }}>
             <ApiOutlined /> API 接口测试
           </Title>
@@ -219,38 +337,22 @@ const APITest = () => {
                 />
               )}
 
-              {result && (
-                <div>
-                  <Title level={4}>响应数据</Title>
-                  <Card size="small" style={{ backgroundColor: '#f5f5f5' }}>
-                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: '12px' }}>
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                  </Card>
+              <div style={{ marginBottom: '16px' }}>
+                <Table
+                  columns={columns}
+                  dataSource={testHistory}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条记录`
+                  }}
+                  scroll={{ x: 800 }}
+                  size="small"
+                />
+              </div>
 
-                  {result.imageUrls && result.imageUrls.length > 0 && (
-                    <div style={{ marginTop: '16px' }}>
-                      <Title level={4}>生成的图片</Title>
-                      <Row gutter={[8, 8]}>
-                        {result.imageUrls.map((url: string, index: number) => (
-                          <Col span={12} key={index}>
-                            <Card size="small" hoverable>
-                              <img
-                                src={url}
-                                alt={`Generated ${index + 1}`}
-                                style={{ width: '100%', height: '120px', objectFit: 'cover' }}
-                              />
-                              <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                <Tag color="blue">图片 {index + 1}</Tag>
-                              </div>
-                            </Card>
-                          </Col>
-                        ))}
-                      </Row>
-                    </div>
-                  )}
-                </div>
-              )}
             </Card>
           </Col>
         </Row>

@@ -13,8 +13,8 @@ import {
   Alert,
   Image,
   Tag,
-  Modal,
-  message
+  message,
+  App
 } from 'antd'
 import { 
   RocketOutlined, 
@@ -30,10 +30,11 @@ import { sessionService, SessionFormData } from '../services/sessionService'
 import { storageService, StoredImage } from '../services/storageService'
 
 const { TextArea } = Input
-const { Text } = Typography
+const { Text, Title } = Typography
 const { Option } = Select
 
 const Generate = () => {
+  const { modal } = App.useApp()
   const [prompt, setPrompt] = useState('')
   const [size, setSize] = useState('1328*1328')
   const [model, setModel] = useState('qwen-image-plus')
@@ -219,13 +220,14 @@ const Generate = () => {
 
   // 清除所有数据
   const handleClearAll = () => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认清空所有数据',
       content: '此操作将清空所有生成的图片、表单数据和会话信息，且无法恢复。确定要继续吗？',
       okText: '确定清空',
       cancelText: '取消',
       okType: 'danger',
       onOk() {
+        // 执行清除操作
         sessionService.clearAll()
         storageService.clearAllImages() // 也清除本地存储的图片
         setPrompt('')
@@ -240,7 +242,11 @@ const Generate = () => {
           images: [],
         })
         setAllImages([]) // 清空显示的图片
+        message.success('所有数据已清除！')
         console.log('所有数据已清除')
+      },
+      onCancel() {
+        console.log('用户取消了清空操作')
       },
     })
   }
@@ -434,6 +440,20 @@ const Generate = () => {
           display: 'flex',
           flexDirection: 'column'
         }}>
+          {/* 页面标题 */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <Title level={3} style={{ 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '4px'
+            }}>
+              <PictureOutlined /> AI 图片生成器
+            </Title>
+            <Text type="secondary" style={{ fontSize: '16px' }}>
+              使用AI技术生成精美的图片作品
+            </Text>
+          </div>
 
           {/* 错误信息展示 */}
           {generationResult.status === 'error' && (

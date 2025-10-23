@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layout, Typography, Card, Row, Col, Empty, Button, Space, Tag, Image, Spin, Statistic, message, Modal } from 'antd'
+import { Layout, Typography, Card, Row, Col, Empty, Button, Space, Tag, Image, Spin, Statistic, message, App } from 'antd'
 import { Link } from 'react-router-dom'
 import { 
   PictureOutlined, 
@@ -16,6 +16,7 @@ const { Content } = Layout
 const { Title, Text } = Typography
 
 const Gallery = () => {
+  const { modal } = App.useApp()
   const [images, setImages] = useState<StoredImage[]>([])
   const [, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -62,7 +63,7 @@ const Gallery = () => {
 
   // 清空所有图片
   const handleClearAll = () => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认清空所有图片',
       content: '此操作将删除所有已保存的图片，且无法恢复。确定要继续吗？',
       okText: '确定删除',
@@ -74,6 +75,9 @@ const Gallery = () => {
         setStats(storageService.getStats())
         message.success('已清空所有图片！')
       },
+      onCancel() {
+        console.log('用户取消了清空操作')
+      },
     })
   }
 
@@ -81,11 +85,11 @@ const Gallery = () => {
     <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)', background: '#fafafa' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <Title level={1} style={{ 
+          <Title level={3} style={{ 
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            marginBottom: '16px'
+            marginBottom: '4px'
           }}>
             <PictureOutlined /> 图片画廊
           </Title>
