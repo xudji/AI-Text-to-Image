@@ -12,11 +12,19 @@ const client = axios.create({
 // 请求拦截器
 client.interceptors.request.use(
   (config) => {
-    // 可以在这里添加认证token等
+    // 设置DashScope API Key  在这里替换成自己的阿里云百炼apikey即可使用
+    const apiKey = 'apikey'
+    if (apiKey) {
+      config.headers.Authorization = `Bearer ${apiKey}`
+      console.log('设置API Key:', apiKey.substring(0, 10) + '...')
+    }
+    
+    // 也可以从localStorage获取token（备用）
     const token = localStorage.getItem('token')
-    if (token) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
     return config
   },
   (error) => {

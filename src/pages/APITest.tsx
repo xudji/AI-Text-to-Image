@@ -21,7 +21,7 @@ import {
 import { imageService } from '../api/imageService'
 
 const { Content } = Layout
-const { Title, Text, Paragraph } = Typography
+const { Title, Text } = Typography
 const { TextArea } = Input
 const { Option } = Select
 
@@ -91,7 +91,7 @@ const APITest = () => {
   }
 
   return (
-    <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
+    <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)', background: '#fafafa' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <Title level={1} style={{ 

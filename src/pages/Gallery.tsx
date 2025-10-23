@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layout, Typography, Card, Row, Col, Empty, Button, Space, Tag, Image, Spin, Statistic, message } from 'antd'
+import { Layout, Typography, Card, Row, Col, Empty, Button, Space, Tag, Image, Spin, Statistic, message, Modal } from 'antd'
 import { Link } from 'react-router-dom'
 import { 
   PictureOutlined, 
@@ -62,14 +62,23 @@ const Gallery = () => {
 
   // 清空所有图片
   const handleClearAll = () => {
-    storageService.clearAllImages()
-    setImages([])
-    setStats(storageService.getStats())
-    message.success('已清空所有图片！')
+    Modal.confirm({
+      title: '确认清空所有图片',
+      content: '此操作将删除所有已保存的图片，且无法恢复。确定要继续吗？',
+      okText: '确定删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk() {
+        storageService.clearAllImages()
+        setImages([])
+        setStats(storageService.getStats())
+        message.success('已清空所有图片！')
+      },
+    })
   }
 
   return (
-    <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
+    <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)', background: '#fafafa' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <Title level={1} style={{ 
@@ -154,6 +163,17 @@ const Gallery = () => {
                 </Button>
               </Space>
             }
+            style={{
+              maxHeight: 'calc(100vh - 200px)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            bodyStyle={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '16px'
+            }}
+            className="custom-scrollbar"
           >
             <Row gutter={[16, 16]}>
               {images.map((image: any, index: number) => (

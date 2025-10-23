@@ -12,13 +12,14 @@ import {
   Spin, 
   Alert,
   Image,
-  Tag
+  Tag,
+  Modal,
+  message
 } from 'antd'
 import { 
   RocketOutlined, 
   PictureOutlined, 
   SettingOutlined,
-  CheckCircleOutlined,
   ExclamationCircleOutlined,
   DownloadOutlined,
 } from '@ant-design/icons'
@@ -135,14 +136,15 @@ const Generate = () => {
         }
         response = await imageService.generateImageFull(requestData)
       } else {
-        // 使用简化版API
+        // 使用简化版API - 只传递基本参数，使用默认值
         const requestData: GenerateImageSimpleRequest = {
           prompt: prompt.trim(),
           size: size,
           model: model,
-          negativePrompt: negativePrompt,
-          watermark: watermark,
-          promptExtend: promptExtend,
+          // 简化模式下使用默认值，不传递高级参数
+          negativePrompt: '', // 简化模式默认不设置负面提示词
+          watermark: false,   // 简化模式默认不添加水印
+          promptExtend: true, // 简化模式默认开启智能改写
         }
         response = await imageService.generateImageSimple(requestData)
       }
@@ -168,6 +170,8 @@ const Generate = () => {
         sessionService.saveGenerationResult(result)
         // 重新加载所有图片
         loadAllImages()
+        // 显示成功提示
+        message.success(`生成成功！已生成 ${images.length} 张图片`)
       } else {
         const result = {
           status: 'error' as const,
@@ -215,21 +219,30 @@ const Generate = () => {
 
   // 清除所有数据
   const handleClearAll = () => {
-    sessionService.clearAll()
-    storageService.clearAllImages() // 也清除本地存储的图片
-    setPrompt('')
-    setSize('1328*1328')
-    setModel('qwen-image-plus')
-    setUseFullAPI(false)
-    setNegativePrompt('')
-    setWatermark(false)
-    setPromptExtend(true)
-    setGenerationResult({
-      status: 'idle',
-      images: [],
+    Modal.confirm({
+      title: '确认清空所有数据',
+      content: '此操作将清空所有生成的图片、表单数据和会话信息，且无法恢复。确定要继续吗？',
+      okText: '确定清空',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk() {
+        sessionService.clearAll()
+        storageService.clearAllImages() // 也清除本地存储的图片
+        setPrompt('')
+        setSize('1328*1328')
+        setModel('qwen-image-plus')
+        setUseFullAPI(false)
+        setNegativePrompt('')
+        setWatermark(false)
+        setPromptExtend(true)
+        setGenerationResult({
+          status: 'idle',
+          images: [],
+        })
+        setAllImages([]) // 清空显示的图片
+        console.log('所有数据已清除')
+      },
     })
-    setAllImages([]) // 清空显示的图片
-    console.log('所有数据已清除')
   }
 
   return (
@@ -246,7 +259,7 @@ const Generate = () => {
           overflowY: 'auto'
         }}>
           {/* 清除数据按钮 */}
-          {sessionService.hasSavedData() && (
+          {allImages.length > 0 && (
             <div style={{ marginBottom: '16px' }}>
               <Button 
                 type="text" 
@@ -336,48 +349,59 @@ const Generate = () => {
                     <Option value={false}>简化模式 (推荐)</Option>
                     <Option value={true}>完整模式</Option>
                   </Select>
+                  <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {useFullAPI 
+                      ? '完整模式：显示所有高级参数，适合专业用户' 
+                      : '简化模式：只显示基本参数，使用智能默认值'
+                    }
+                  </Text>
                 </div>
 
-                <div>
-                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                    🚫 负面提示词
-                  </Text>
-                  <TextArea
-                    value={negativePrompt}
-                    onChange={(e) => setNegativePrompt(e.target.value)}
-                    placeholder="例如：模糊、低质量、变形、多余的手指、比例失调"
-                    rows={2}
-                    style={{ fontSize: '14px' }}
-                  />
-                </div>
+                {/* 完整模式才显示的高级参数 */}
+                {useFullAPI && (
+                  <>
+                    <div>
+                      <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                        🚫 负面提示词
+                      </Text>
+                      <TextArea
+                        value={negativePrompt}
+                        onChange={(e) => setNegativePrompt(e.target.value)}
+                        placeholder="例如：模糊、低质量、变形、多余的手指、比例失调"
+                        rows={2}
+                        style={{ fontSize: '14px' }}
+                      />
+                    </div>
 
-                <div>
-                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                    ⚙️ 高级选项
-                  </Text>
-                  <Row gutter={[8, 8]}>
-                    <Col span={12}>
-                      <Button
-                        type={watermark ? 'primary' : 'default'}
-                        size="small"
-                        onClick={() => setWatermark(!watermark)}
-                        style={{ width: '100%' }}
-                      >
-                        {watermark ? '✓ 水印' : '○ 水印'}
-                      </Button>
-                    </Col>
-                    <Col span={12}>
-                      <Button
-                        type={promptExtend ? 'primary' : 'default'}
-                        size="small"
-                        onClick={() => setPromptExtend(!promptExtend)}
-                        style={{ width: '100%' }}
-                      >
-                        {promptExtend ? '✓ 智能改写' : '○ 智能改写'}
-                      </Button>
-                    </Col>
-                  </Row>
-                </div>
+                    <div>
+                      <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                        ⚙️ 高级选项
+                      </Text>
+                      <Row gutter={[8, 8]}>
+                        <Col span={12}>
+                          <Button
+                            type={watermark ? 'primary' : 'default'}
+                            size="small"
+                            onClick={() => setWatermark(!watermark)}
+                            style={{ width: '100%' }}
+                          >
+                            {watermark ? '✓ 水印' : '○ 水印'}
+                          </Button>
+                        </Col>
+                        <Col span={12}>
+                          <Button
+                            type={promptExtend ? 'primary' : 'default'}
+                            size="small"
+                            onClick={() => setPromptExtend(!promptExtend)}
+                            style={{ width: '100%' }}
+                          >
+                            {promptExtend ? '✓ 智能改写' : '○ 智能改写'}
+                          </Button>
+                        </Col>
+                      </Row>
+                    </div>
+                  </>
+                )}
               </Space>
             </div>
           </Card>
@@ -406,19 +430,10 @@ const Generate = () => {
           flex: 1,
           padding: '24px',
           overflowY: 'auto',
-          background: '#fff'
+          background: '#fff',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          {/* 成功消息 */}
-          {generationResult.status === 'success' && (
-            <Alert
-              message="生成成功！"
-              description={`已成功生成 ${generationResult.images.length} 张图片`}
-              type="success"
-              icon={<CheckCircleOutlined />}
-              showIcon
-              style={{ marginBottom: '24px' }}
-            />
-          )}
 
           {/* 错误信息展示 */}
           {generationResult.status === 'error' && (
@@ -442,18 +457,30 @@ const Generate = () => {
                   <Tag color="blue">{allImages.length} 张图片</Tag>
                 </Space>
               }
-              style={{ marginBottom: '24px' }}
+              style={{ 
+                marginBottom: '24px',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              bodyStyle={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '16px',
+                maxHeight: 'calc(100vh - 200px)'
+              }}
+              className="custom-scrollbar"
             >
               <Row gutter={[16, 16]}>
                 {allImages.map((image: StoredImage, index: number) => (
-                  <Col xs={24} sm={12} md={8} lg={6} key={index}>
+                  <Col xs={24} sm={12} md={12} lg={8} key={index}>
                     <Card
                       hoverable
                       cover={
                         <Image
                           src={image.url}
                           alt={image.prompt}
-                          style={{ height: '200px' , width: '200px',objectFit: 'cover' }}
+                          style={{ height: '200px', width: '100%', objectFit: 'cover' }}
                           placeholder={
                             <div style={{ 
                               height: '200px', 
@@ -468,12 +495,15 @@ const Generate = () => {
                         />
                       }
                       style={{ 
-                        width: '200px',
-                        margin: '0 auto'
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column'
                       }}
                       bodyStyle={{ 
                         padding: '12px',
-                        width: '200px'
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column'
                       }}
                     >
                        <div style={{ width: '100%' }}>
