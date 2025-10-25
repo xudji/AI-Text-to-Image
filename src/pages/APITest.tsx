@@ -12,11 +12,11 @@ import {
   Alert,
   Divider,
   Table,
-  Tag
+  Tag,
+  message
 } from 'antd'
 import { 
   ApiOutlined, 
-  CheckCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons'
 import { imageService } from '../api/imageService'
@@ -33,7 +33,6 @@ const APITest = () => {
   const [useFullAPI, setUseFullAPI] = useState(false)
   const [negativePrompt, setNegativePrompt] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [testHistory, setTestHistory] = useState<any[]>([])
 
@@ -54,13 +53,32 @@ const APITest = () => {
       title: '响应数据',
       dataIndex: 'responseData',
       key: 'responseData',
-      width: 120,
+      width: 400,
       ellipsis: true,
-      render: (data: any) => (
-        <span title={JSON.stringify(data, null, 2)}>
-          {data ? '查看详情' : '-'}
-        </span>
-      )
+      render: (data: any) => {
+        if (!data) return '-'
+        
+        // 直接展示JSON数据
+        const jsonString = JSON.stringify(data, null, 2)
+        return (
+          <pre style={{
+            margin: 0,
+            padding: '4px 8px',
+            fontSize: '12px',
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d9d9d9',
+            borderRadius: '4px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            maxHeight: '100px',
+            overflowY: 'auto',
+            overflowX: 'auto'
+          }}>
+            {jsonString}
+          </pre>
+        )
+      }
     },
     {
       title: '时间',
@@ -122,7 +140,6 @@ const APITest = () => {
   const handleTestSimpleAPI = async () => {
     setLoading(true)
     setError(null)
-    setResult(null)
     
     try {
       const response = await imageService.generateImageSimple({
@@ -130,7 +147,9 @@ const APITest = () => {
         size,
         model
       })
-      setResult(response)
+      
+      // 显示成功消息
+      message.success('API测试成功！')
       
       // 保存测试结果到历史记录
       const testResult = {
@@ -158,7 +177,6 @@ const APITest = () => {
   const handleTestFullAPI = async () => {
     setLoading(true)
     setError(null)
-    setResult(null)
     
     try {
       const response = await imageService.generateImageFull({
@@ -183,7 +201,9 @@ const APITest = () => {
           watermark: false
         }
       })
-      setResult(response)
+      
+      // 显示成功消息
+      message.success('API测试成功！')
       
       // 保存测试结果到历史记录
       const testResult = {
@@ -226,7 +246,7 @@ const APITest = () => {
         </div>
 
         <Row gutter={[24, 24]}>
-          <Col xs={24} lg={12}>
+          <Col xs={24} lg={8}>
             <Card title="测试参数">
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 <div>
@@ -313,7 +333,7 @@ const APITest = () => {
             </Card>
           </Col>
 
-          <Col xs={24} lg={12}>
+          <Col xs={24} lg={16}>
             <Card title="测试结果">
               {error && (
                 <Alert
@@ -326,16 +346,6 @@ const APITest = () => {
                 />
               )}
 
-              {result && (
-                <Alert
-                  message="测试成功"
-                  description="API调用成功"
-                  type="success"
-                  icon={<CheckCircleOutlined />}
-                  showIcon
-                  style={{ marginBottom: '16px' }}
-                />
-              )}
 
               <div style={{ marginBottom: '16px' }}>
                 <Table

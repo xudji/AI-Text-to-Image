@@ -13,7 +13,7 @@ const client = axios.create({
 client.interceptors.request.use(
   (config) => {
     // 设置DashScope API Key  在这里替换成自己的阿里云百炼apikey即可使用
-    const apiKey = ''
+    const apiKey = 'xxx'
     if (apiKey) {
       config.headers.Authorization = `Bearer ${apiKey}`
       console.log('设置API Key:', apiKey.substring(0, 10) + '...')
