@@ -9,7 +9,26 @@
 - 📱 **响应式设计**：完美适配桌面端和移动端
 - 🖼️ **图片管理**：生成图片自动保存，支持下载和删除
 - 📊 **测试工具**：内置API测试功能，支持历史记录查看
-- 💾 **数据持久化**：本地存储，数据不丢失
+
+## 📸 项目截图
+
+### 主界面 - 图片生成
+![图片生成界面](assets/1.png)
+*简洁直观的图片生成界面，支持多种参数设置*
+
+### 图片画廊
+![图片画廊](assets/2.png)
+*展示所有生成的图片，支持管理和下载*
+
+### API测试工具
+![API测试](assets/3.png)
+*专业的API测试界面，支持历史记录查看*
+
+### 响应式设计
+![移动端适配](assets/4.png)
+*完美适配移动设备，随时随地生成图片*
+
+
 
 ## 🚀 快速开始
 
@@ -41,26 +60,6 @@ VITE_DASHSCOPE_API_KEY=sk-your-actual-api-key-here
 ```bash
 npm run dev
 ```
-
-访问 [http://localhost:5173](http://localhost:5173) 查看应用。
-
-## 📸 项目截图
-
-### 主界面 - 图片生成
-![图片生成界面](assets/1.png)
-*简洁直观的图片生成界面，支持多种参数设置*
-
-### 图片画廊
-![图片画廊](assets/2.png)
-*展示所有生成的图片，支持管理和下载*
-
-### API测试工具
-![API测试](assets/3.png)
-*专业的API测试界面，支持历史记录查看*
-
-### 响应式设计
-![移动端适配](assets/4.png)
-*完美适配移动设备，随时随地生成图片*
 
 ## 🛠️ 技术栈
 
@@ -158,13 +157,6 @@ npm run build
 - **Netlify**：拖拽 `dist` 目录到Netlify
 - **GitHub Pages**：使用GitHub Actions自动部署
 
-## 🤝 贡献指南
-
-1. Fork 本仓库
-2. 创建功能分支：`git checkout -b feature/AmazingFeature`
-3. 提交更改：`git commit -m 'Add some AmazingFeature'`
-4. 推送到分支：`git push origin feature/AmazingFeature`
-5. 提交Pull Request
 
 ## 📄 许可证
 
